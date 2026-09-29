@@ -31,10 +31,19 @@ step, so a new session can resume without re-deriving anything.
   rerun were all verified.
 - The tiny download is on disk: `/glade/derecho/scratch/kheyblom/data/imerg_tiny/`
   (273 files, 8 GB), verified. It can be deleted, but only with the user's okay.
-- Rate: about 58 MB/s with 2 workers. The full record at 4 workers should take roughly
-  1–1.5 h.
-- Next is task 5: the full V07 final daily download with `./run_download.sh`. It needs
-  the user's go-ahead.
+- Task 5 is in progress. The user approved it. The full V07 final daily run started
+  2026-09-29 09:53 on **derecho6**, pid 442373 (`./run_download.sh`, 4 workers, about
+  130 MB/s). At 10:30 it was at 8,266/10,135. There were 3 transient 502/503 errors, all
+  recovered on retry. From another login node, check it with
+  `ssh derecho6 'kill -0 442373 && echo alive || echo dead'` and the logs. When it ends,
+  confirm that the main log shows `verified 10135/10135` and `done :-)`, then mark
+  task 5 complete.
+- An uncommitted edit in `imerg_download.py` still needs a test: `init_worker` now resets
+  SIGTERM to its default and ignores SIGINT. On 3.13 the pool uses `fork`, so workers
+  inherit the main process's handlers, and without the reset they print
+  KeyboardInterrupt tracebacks when the pool terminates them. Worker logs are now
+  `<stem>_forkpoolworker-N.log`. After the full run ends, test it with an interrupted
+  run on a scratch config into the scratchpad, then commit.
 - The environment was fixed on 2026-09-29. On Python 3.14.3, every numpy release tried
   (2.3.5 to 2.5.3) segfaults on an in-place op on a large temporary, for example
   `c = False; c |= big_array == x`. That is what made `xarray.open_dataset` crash while
