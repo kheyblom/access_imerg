@@ -35,10 +35,12 @@ step, so a new session can resume without re-deriving anything.
   1–1.5 h.
 - Next is task 5: the full V07 final daily download with `./run_download.sh`. It needs
   the user's go-ahead.
-- Known environment problem: in `.venv`, `xarray.open_dataset` segfaults whichever
-  engine is used, because xarray loads the h5py-based backend and the h5py and netCDF4
-  wheels bring conflicting HDF5 builds. `h5py` or `netCDF4` alone read the files fine.
-  It does not affect downloading. Fix it before any processing work.
+- The environment was fixed on 2026-09-29. On Python 3.14.3, every numpy release tried
+  (2.3.5 to 2.5.3) segfaults on an in-place op on a large temporary, for example
+  `c = False; c |= big_array == x`. That is what made `xarray.open_dataset` crash while
+  decoding its mask. It is not an HDF5 problem. The venv is now Python 3.13.11
+  (`requires-python = ">=3.12,<3.14"`, the same as the siblings), and xarray reads the
+  files with both engines. Don't move to 3.14 without rerunning that one-liner.
 
 Design choices already settled with the user:
 - Transfer is our own per-file `Pool` loop (gleam pattern) over
@@ -52,7 +54,7 @@ Design choices already settled with the user:
 
 ## Environment and commands
 
-- Python 3.14 environment managed by `uv`, already built in `.venv/`. Run everything as
+- Python 3.13 environment managed by `uv` (3.14 crashes numpy, see above), already built in `.venv/`. Run everything as
   `uv run python <script> --config config/<file>.yaml` (or `.venv/bin/python`).
   `uv sync` rebuilds it from `uv.lock`.
 - `pyyaml` (needed by `utils/path_utils.py`) is now an explicit dependency.
