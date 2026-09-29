@@ -5,7 +5,7 @@ We need to build a pipeline or downloading all available IMERG data. We will wor
 # 2. init a git repo [COMPLETED]
 Initalize a github repo and connect to the remote (see general notes).
 
-# 3. Plan and build the codebase
+# 3. Plan and build the codebase [COMPLETED]
 I want you to build the codebase for this pipeline. Design the codebase to be consistent with each of the other access codebases (see general notes).
 Download the data using the earthaccess python package.
 The environment is already created.
@@ -13,12 +13,32 @@ See the search notebook for an example of searching the data.
 Make sure that the version, product (in this case: [early, late, final]), and time frequency are configurable - I will eventually want to download all of them.
 At first, set up the scripts for downloading version 07 final daily files. We will configure for other products in the future.
 
+Initial build (done):
+- `imerg_download.py`: earthaccess handles login and the CMR search, and a pool of workers streams each file to `.part` and renames it once its size is checked. Also skips files already downloaded, sweeps partials, retries, and ends with a verification pass. Supports `--dry-run`.
+- configs: `config/config_download.yaml` (V07 final daily, full record) and `config/config_download_tiny.yaml` (2025 only, separate scratch dir). A product is `<latency>/<frequency>`, e.g. `final/daily`.
+- `utils/` (copied from siblings), `run_download.sh` (detached login-node run, `--status`), `job_download.pbs` (Casper fallback), `README.md`.
+- dry runs pass: full = 10,135 files / 291 GB, tiny = 273 files / 7.9 GB, all release V07B.
+
+# 4. Test the pipeline
+Run the tiny config end-to-end before any full download (~7.9 GB, login node, no core-hours):
+- `./run_download.sh config/config_download_tiny.yaml`; check `--status`, the per-worker logs, a clean verification pass and `done :-)`.
+- rerun it and confirm every file is skipped.
+- interrupt a run with `kill -INT`, confirm `.part` files are swept, and confirm a rerun resumes and verifies.
+- fix anything found, and commit.
+
+# 5. Full download of V07 final daily
+Download the full V07 final daily record (10,135 files, ~291 GB) into `/glade/derecho/scratch/kheyblom/data/imerg/`.
+- needs my approval before starting.
+- default route: `./run_download.sh` (detached, `nice -n 19` on a login node). Fallback: `qsub -A "$PBS_ACCOUNT" job_download.pbs` on Casper.
+- monitor with `./run_download.sh --status`; rerun if verification reports missing files.
+- done when verification reports all files present and complete.
+
 
 # General notes:
 - the git remote is: https://github.com/kheyblom/access_imerg.git
 - ensure to always use proper git version controlling as changes are made
 - use and update a CLAUDE.md that will take this information and effectively and efficiently handle this project
-- use information learned in each of the directories in: @/glade/u/home/kheyblom/work/data_access and add to this project's CLAUDE.md. Each directory contains a codebase for accessing data to be downloaded into our data lake. @/glade/u/home/kheyblom/work/data_access/access_smap will ikely be the most useful as is also uses the earthacess package.
+- use information learned in each of the directories in: @/glade/u/home/kheyblom/work/data_access and add to this project's CLAUDE.md. Each directory contains a codebase for accessing data to be downloaded into our data lake. @/glade/u/home/kheyblom/work/data_access/access_smap will likely be the most useful as is also uses the earthacess package.
 - it is always important to minimize compute costs on derecho. we have a finite allocation and we need to managing our usage.
 - keep notes on your current working state. you may lose connection to the HPC system or I may need to start new sessions, so I need you to be able to easily pick up where you left off.
 - additional tasks may come up that need to occur between the above tasks. this task list can be flexible, but if substantial changes are need, I need to approve them.

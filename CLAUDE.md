@@ -16,17 +16,18 @@ step, so a new session can resume without re-deriving anything.
 ## Current working state
 
 - Task 1 (this CLAUDE.md) and task 2 (git repo, `origin` connected) are done.
-- Task 3 is built but not yet marked complete. The approved plan is in
+- Task 3 (initial build) is complete. The approved plan is in
   `~/.claude/plans/see-tasks-md-i-atomic-adleman.md`. These exist: `imerg_download.py`,
   `config/config_download.yaml` (V07 final daily, full record) and
   `config/config_download_tiny.yaml` (2025 only, into `data/imerg_tiny/`), `utils/`,
   `run_download.sh`, `job_download.pbs` and `README.md`.
 - Verified so far: dry runs only. Full: 10,135 files, 291.45 GB. Tiny: 273 files,
   7.92 GB. All are release V07B, with no skipped names.
-- Remaining for task 3, each needing the user's go-ahead: (1) run the tiny download with
-  `./run_download.sh config/config_download_tiny.yaml`, check verification and
-  `done :-)`, rerun to confirm all files are skipped, and test a `kill -INT` resume;
-  (2) start the full download. Then mark task 3 complete in TASKS.md.
+- Next is task 4 (tests): the tiny download with
+  `./run_download.sh config/config_download_tiny.yaml`, checking verification and
+  `done :-)`, a rerun to confirm all files are skipped, and a `kill -INT` resume test.
+  After that comes task 5 (the full V07 final daily download). Each needs the user's
+  go-ahead.
 - Nothing has been downloaded yet.
 
 Design choices already settled with the user:
