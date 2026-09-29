@@ -23,7 +23,16 @@ step, so a new session can resume without re-deriving anything.
   `run_download.sh`, `job_download.pbs` and `README.md`.
 - Verified so far: dry runs only. Full: 10,135 files, 291.45 GB. Tiny: 273 files,
   7.92 GB. All are release V07B, with no skipped names.
-- Next is task 4 (tests): the tiny download with
+- Task 4 is in progress. The first tiny run (2026-09-29) got 403 `EULA Acceptance Failure`
+  on every GET, because the GES DISC application is not approved on the Earthdata
+  account. HEAD requests succeed via CloudFront, so a HEAD check does not detect this.
+  The user must approve it at
+  https://urs.earthdata.nasa.gov/approve_app?client_id=e2WVk8Pw6weeLUKZYOxvTQ. Nothing was
+  written to disk. Fixes made: a one-byte `check_access` before the pool (it also runs on
+  dry runs), no retries on 401/403, and SIGINT/SIGTERM handlers (`kill -INT` was ignored,
+  because background jobs from a non-interactive shell inherit SIGINT as ignored). The
+  handlers were tested detached. Once access is approved, rerun the tiny test.
+- Task 4 checklist: the tiny download with
   `./run_download.sh config/config_download_tiny.yaml`, checking verification and
   `done :-)`, a rerun to confirm all files are skipped, and a `kill -INT` resume test.
   After that comes task 5 (the full V07 final daily download). Each needs the user's

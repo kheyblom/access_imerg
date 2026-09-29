@@ -31,6 +31,7 @@ import argparse
 import os
 import re
 import time
+import signal
 import socket
 import multiprocessing
 from datetime import datetime
@@ -44,6 +45,7 @@ from utils.log_utils import (
 )
 
 import earthaccess
+import requests
 
 # CMR short name of each IMERG collection, by (latency, frequency); the version
 # is searched separately. There is no early or late monthly product.
@@ -86,6 +88,9 @@ FILENAME_RE = re.compile(
 # 'V07' -> '07', which is both the CMR collection version and, as 'v_07', the
 # local directory name
 VERSION_RE = re.compile(r'^[Vv](?P<number>\d+)$')
+# statuses that mean the account may not fetch the file at all, typically an
+# unapproved GES DISC application or EULA; retrying cannot fix these
+ACCESS_DENIED = (401, 403)
 # processName keeps the workers apart in the shared console stream
 LOG_FORMAT = '%(asctime)s [%(levelname)s] %(processName)s %(name)s: %(message)s'
 
@@ -219,6 +224,63 @@ def login():
     if not auth or not auth.authenticated:
         raise RuntimeError('earthdata login failed, check ~/.netrc')
     return auth
+
+
+def raise_interrupt(signum, frame):
+    """Signal handler that turns SIGTERM into a KeyboardInterrupt.
+
+    Args:
+        signum (int): The signal received.
+        frame (frame): The interrupted stack frame, unused.
+
+    Raises:
+        KeyboardInterrupt: Always, so the run cleans up as it would on Ctrl-C.
+    """
+    raise KeyboardInterrupt(f'received signal {signum}')
+
+
+def install_signal_handlers():
+    """Make SIGINT and SIGTERM stop the run cleanly.
+
+    A job started in the background from a non-interactive shell, which is how
+    run_download.sh starts it, inherits SIGINT as ignored, and Python leaves an
+    ignored SIGINT alone, so without this ``kill -INT`` does nothing. SIGTERM,
+    from a plain ``kill`` or a PBS walltime, would otherwise end the process
+    without sweeping its partial files or removing the pid file.
+    """
+    signal.signal(signal.SIGINT, signal.default_int_handler)
+    signal.signal(signal.SIGTERM, raise_interrupt)
+
+
+def check_access(url):
+    """Fetch the first byte of one file to prove the account may download.
+
+    Earthdata login succeeding is not enough: GES DISC also requires its
+    application to be approved on the account, and until it is every download
+    fails with 403 'EULA Acceptance Failure'. Checking one file up front turns
+    that into one clear error instead of a failure per file.
+
+    Args:
+        url (str): The HTTPS link of any file in the run.
+
+    Raises:
+        RuntimeError: If the server refuses the request, with its explanation
+            and, when it gives one, the URL where access can be granted.
+    """
+    session = earthaccess.get_requests_https_session()
+    with session.get(url, headers={'Range': 'bytes=0-0'}, stream=True, timeout=(30, 300)) as response:
+        if response.ok:
+            return
+        try:
+            detail = response.json()
+        except ValueError:
+            detail = {}
+    message = detail.get('error_description') or response.reason
+    resolution = detail.get('resolution_url')
+    raise RuntimeError(
+        f'GES DISC refused {url} with {response.status_code} ({message})'
+        + (f'; grant access at {resolution}' if resolution else '')
+    )
 
 
 def in_year_range(year, year_range):
@@ -479,6 +541,11 @@ def download_file(job):
             LOG.error(f'{tag} failed to download {name}: {error}')
             if os.path.exists(tmp_path):
                 os.remove(tmp_path)
+            response = getattr(error, 'response', None)
+            if isinstance(error, requests.HTTPError) and response is not None \
+                    and response.status_code in ACCESS_DENIED:
+                # a permission problem, not a transient one; a retry only adds load
+                return False
             if attempt < attempts:
                 time.sleep(2**attempt)
             continue
@@ -567,6 +634,7 @@ def verify_downloads(jobs):
 
 def main(settings, dry_run=False):
 
+    install_signal_handlers()
     os.makedirs(download_root(settings), exist_ok=True)
     os.makedirs(settings['directories']['logs'], exist_ok=True)
     log_file = os.path.join(settings['directories']['logs'], settings['log_file'])
@@ -595,6 +663,16 @@ def main(settings, dry_run=False):
     jobs = [job for product_files in per_product.values() for job in product_files]
     total_bytes = sum(size for _, _, size in jobs)
     LOG.info(f'found {len(jobs)} files in total ({format_size(total_bytes)})')
+
+    # one byte of one file, so a missing permission stops the run here, dry
+    # run included, rather than failing every file in turn
+    if jobs:
+        try:
+            check_access(jobs[0][0])
+        except RuntimeError as error:
+            LOG.error(str(error))
+            raise SystemExit(1)
+        LOG.info('access check passed')
 
     if dry_run:
         for product, product_files in per_product.items():

@@ -25,7 +25,10 @@ machine urs.earthdata.nasa.gov login <user> password <password>
 ```
 
 GES DISC data also needs the *NASA GESDISC DATA ARCHIVE* application approved under
-your Earthdata profile. Then install the environment with `uv sync`.
+your Earthdata profile. Until it is approved, login and search still work, but every
+download fails with `403 EULA Acceptance Failure`. The run checks access by fetching
+one byte of one file before it starts, and on failure it logs the approval URL and
+exits. Then install the environment with `uv sync`.
 
 ## Running
 
@@ -56,8 +59,10 @@ tail -n 40 logs/imerg_download.log      # main log: totals, verification, failur
 ls logs/                                 # one log per worker, one line per file
 ```
 
-Stopping is always safe. `kill -INT <pid>` sweeps partial files on the way out, and a
-rerun picks up exactly what is missing. A second run over the same download directory
+Stopping is always safe. `kill -INT <pid>` or a plain `kill <pid>` sweeps partial files
+and removes the pid file on the way out, and a rerun picks up exactly what is missing.
+The script restores its own SIGINT handler, because a job started in the background
+from a non-interactive shell inherits SIGINT as ignored. A second run over the same download directory
 is refused while the first is alive. Logs append across runs, so use the pid file, not
 a `grep` for `done :-)`, to tell whether something is in progress.
 
