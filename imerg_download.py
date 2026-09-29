@@ -452,7 +452,7 @@ def worker_log_file(settings, worker=None):
             name of the calling process.
 
     Returns:
-        str: e.g. '<logs>/imerg_download_forkserverpoolworker-1.log'.
+        str: e.g. '<logs>/imerg_download_forkpoolworker-1.log'.
     """
     stem, extension = os.path.splitext(settings['log_file'])
     worker = worker or multiprocessing.current_process().name.lower()
@@ -464,10 +464,15 @@ def init_worker(settings):
 
     Runs once per worker at pool startup, so each worker logs in once and
     reuses its session, and the token it carries, for every file it handles.
+    A forked worker inherits the main process's signal handlers, so they are
+    put back: the pool stops its workers with SIGTERM, which should simply end
+    them, and an interrupt is the main process's to handle.
 
     Args:
         settings (dict): The loaded configuration.
     """
+    signal.signal(signal.SIGTERM, signal.SIG_DFL)
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
     setup_logging(worker_log_file(settings), fmt=LOG_FORMAT)
     login()
     _WORKER_STATE['session'] = earthaccess.get_requests_https_session()

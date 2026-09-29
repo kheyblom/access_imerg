@@ -33,12 +33,18 @@ Results (2026-09-29):
 - rerun: all 273 skipped, verified.
 - files are valid (read with h5py and netCDF4). Found an environment problem: `xarray.open_dataset` segfaults in this venv (h5py and netCDF4 HDF5 conflict). Not a download issue; needs fixing before any processing work.
 
-# 5. Full download of V07 final daily
+# 5. Full download of V07 final daily [COMPLETED]
 Download the full V07 final daily record (10,135 files, ~291 GB) into `/glade/derecho/scratch/kheyblom/data/imerg/`.
 - needs my approval before starting.
 - default route: `./run_download.sh` (detached, `nice -n 19` on a login node). Fallback: `qsub -A "$PBS_ACCOUNT" job_download.pbs` on Casper.
 - monitor with `./run_download.sh --status`; rerun if verification reports missing files.
 - done when verification reports all files present and complete.
+
+Results (2026-09-29):
+- before the run: fixed the Python environment. `xarray.open_dataset` segfaulted because numpy crashes on Python 3.14.3 (every numpy release tried). The venv is now Python 3.13, the same as the siblings, and xarray reads the files.
+- run: login node derecho6, 4 workers, 09:53–10:38 (~45 min, ~130 MB/s). 3 transient 502/503 errors, all recovered on retry.
+- verified 10,135/10,135 files (291.45 GB), `done :-)`. On disk: every year 1998–2024 complete (365/366 files), 2025 to 09-30 (273), no `.part` files.
+- follow-up: workers now reset their inherited signal handlers (on 3.13 the pool forks). Tested with interrupted scratch runs under SIGINT and SIGTERM.
 
 
 # General notes:
