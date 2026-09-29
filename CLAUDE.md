@@ -46,9 +46,9 @@ step, so a new session can resume without re-deriving anything.
   on PATH, because no managed 3.13 was installed. The sibling repos' venvs still use
   miniconda; that is not fixed, since the user did not ask for it.
 - The sibling venvs were fixed too (2026-09-29): mswep was rebuilt on uv's 3.13.12,
-  pinned, and committed and pushed. gleam was rebuilt and pinned, but its changes are
-  **uncommitted**, on top of the user's own uncommitted Sep-13 `requires-python`/`uv.lock`
-  change; ask before committing. smap got only the `only-managed` setting (it has no
+  pinned, and committed and pushed. gleam was rebuilt and pinned, and committed and pushed
+  (7ae66a0) together with the user's earlier `requires-python`/`uv.lock` change, at the
+  user's request. smap got only the `only-managed` setting (it has no
   venv, and it still requires >=3.14, which has the numpy crash; flagged to the user).
   That was committed and pushed over an explicit SSH URL.
 - Task 6 (early and late **daily** only) is in progress. It uses
