@@ -779,6 +779,7 @@ dependencies = [
     { name = "netcdf4" },
     { name = "numpy" },
     { name = "pandas" },
+    { name = "pyyaml" },
     { name = "xarray" },
     { name = "zarr" },
 ]
@@ -794,6 +795,7 @@ requires-dist = [
     { name = "netcdf4", specifier = ">=1.7.4" },
     { name = "numpy", specifier = ">=2.4.2" },
     { name = "pandas", specifier = ">=3.0.1" },
+    { name = "pyyaml", specifier = ">=6.0.2" },
     { name = "xarray", specifier = ">=2026.2.0" },
     { name = "zarr", specifier = ">=3.1.5" },
 ]
