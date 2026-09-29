@@ -38,10 +38,17 @@ step, so a new session can resume without re-deriving anything.
 - `init_worker` resets SIGTERM to its default and ignores SIGINT, because on 3.13 the
   pool forks and workers would otherwise inherit the main process's handlers. This was
   tested with interrupted scratch runs. Worker logs are `<stem>_forkpoolworker-N.log`.
-- Venv base interpreter: `~/miniconda3/bin/python3.13`, the same as the siblings.
-  Updating or removing miniconda would break all of these venvs.
-- There is no task 6 yet. Likely next steps are the other products (early/late, half-hourly,
-  monthly) and keeping the record current. Ask the user.
+- The smoke-test data (`data/imerg_tiny/`) was deleted on 2026-09-29, at the user's request.
+- Open question for the user: the venv's base interpreter is `~/miniconda3/bin/python3`
+  (`.venv/bin/python` is a symlink to it, and `sys.base_prefix` is miniconda). uv manages
+  the packages, but when `uv sync --python 3.13` ran, no uv-managed 3.13 was installed and
+  uv's default `python-preference = managed` falls back to interpreters on PATH, where
+  miniconda comes first. The siblings are the same. The proposed fix, once the user
+  approves: `uv python install 3.13`, pin with `.python-version` and
+  `[tool.uv] python-preference = "only-managed"`, then rebuild `.venv`.
+- Task 6 (early and late products) is written in TASKS.md: 6a is daily (config only),
+  6b is half-hourly (about 1M files and 7+ TB, which needs design work and approval).
+  Nothing for it has started.
 - The environment was fixed on 2026-09-29. On Python 3.14.3, every numpy release tried
   (2.3.5 to 2.5.3) segfaults on an in-place op on a large temporary, for example
   `c = False; c |= big_array == x`. That is what made `xarray.open_dataset` crash while

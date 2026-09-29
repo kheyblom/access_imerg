@@ -45,6 +45,38 @@ Results (2026-09-29):
 - run: login node derecho6, 4 workers, 09:53–10:38 (~45 min, ~130 MB/s). 3 transient 502/503 errors, all recovered on retry.
 - verified 10,135/10,135 files (291.45 GB), `done :-)`. On disk: every year 1998–2024 complete (365/366 files), 2025 to 09-30 (273), no `.part` files.
 - follow-up: workers now reset their inherited signal handlers (on 3.13 the pool forks). Tested with interrupted scratch runs under SIGINT and SIGTERM.
+- smoke-test data (`data/imerg_tiny/`) deleted on request.
+
+# 6. Download V07 early and late products
+Download the Early and Late IMERG runs into the same tree (`<download>/v_07/raw/{early,late}/{daily,half_hourly}/`). These products are still being produced, so each record grows every day.
+
+CMR totals as of 2026-09-29 (sizes estimated from the first granule; later files are larger):
+
+| product | granules | range | est. size |
+|---|---|---|---|
+| `early/daily` (`GPM_3IMERGDE`) | 10,498 | 1998-01-01 – 2026-09-28 | ~260–300 GB |
+| `late/daily` (`GPM_3IMERGDL`) | 10,498 | 1998-01-01 – 2026-09-28 | ~250–300 GB |
+| `early/half_hourly` (`GPM_3IMERGHHE`) | 503,926 | 1998-01-01 – 2026-09-29 | ~3.6 TB |
+| `late/half_hourly` (`GPM_3IMERGHHL`) | 503,906 | 1998-01-01 – 2026-09-29 | ~3.6 TB |
+
+## 6a. Early and late daily
+Config-only: the code already supports these products.
+- add a config (e.g. `config/config_download_early_late_daily.yaml`, with its own `log_file`) listing `early/daily` and `late/daily`.
+- dry run: check counts, sizes, paths and the releases seen.
+- small test: one year into a separate scratch directory. Delete it afterwards.
+- full download (~550 GB, about 1.5 h at the rate task 5 achieved). Needs my approval.
+- done when verification reports all files present and complete.
+
+## 6b. Early and late half-hourly
+About 1 million files and 7+ TB in total, so this needs design work and my approval before any download.
+- storage: confirm the scratch quota and free space, and how the scratch purge policy affects a data lake held there.
+- code: search CMR one year at a time rather than returning 500k granules in one query, and log progress per year. Check that enumeration, skip checks and verification stay reasonable at this file count. The year/month subdirectories (≤1,488 files each) are already in place.
+- testing: one year of half-hourly is ~17,500 files (~125 GB), too big for a smoke test. Decide how to run a smaller test (for example a `date_range` option, which departs from the sibling config shape).
+- dry run, then a small test, then the full download (roughly 15+ h at ~130 MB/s). Run each product as its own run, and consider the Casper PBS fallback for this length.
+- done when verification reports all files present and complete.
+
+## Later (not in this task)
+- keeping the early/late records current (periodic top-up reruns only fetch new files).
 
 
 # General notes:
