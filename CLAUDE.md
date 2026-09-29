@@ -45,9 +45,23 @@ step, so a new session can resume without re-deriving anything.
   "only-managed"` in `pyproject.toml`. Before that, uv had fallen back to miniconda's 3.13
   on PATH, because no managed 3.13 was installed. The sibling repos' venvs still use
   miniconda; that is not fixed, since the user did not ask for it.
-- Task 6 (early and late **daily** only) is written in TASKS.md; it is config-only and
-  has not started. Half-hourly is deferred: the user will do its design work at a later
-  date (see *Later* in TASKS.md).
+- The sibling venvs were fixed too (2026-09-29): mswep was rebuilt on uv's 3.13.12,
+  pinned, and committed and pushed. gleam was rebuilt and pinned, but its changes are
+  **uncommitted**, on top of the user's own uncommitted Sep-13 `requires-python`/`uv.lock`
+  change; ask before committing. smap got only the `only-managed` setting (it has no
+  venv, and it still requires >=3.14, which has the numpy crash; flagged to the user).
+  That was committed and pushed over an explicit SSH URL.
+- Task 6 (early and late **daily** only) is in progress. It uses
+  `config/config_download_early_late_daily.yaml`, with
+  `config/config_download_early_late_daily_tiny.yaml` for the 2026-only test (542/542
+  verified; test data deleted). Dry run: 20,996 files, 608.42 GB. The full run started
+  2026-09-29 11:01 on **derecho3**, pid 3928136, 4 workers. Check it with
+  `./run_download.sh --status config/config_download_early_late_daily.yaml`. When it
+  ends, confirm `verified 20996/20996` and `done :-)`, then mark task 6 complete.
+- Early/late sub-releases: V07B up to 2026-03-03 (early) and 2026-03-02 (late), V07C
+  after that, with no overlap.
+- Half-hourly is deferred: the user will do its design work at a later date (see
+  *Later* in TASKS.md).
 - The environment was fixed on 2026-09-29. On Python 3.14.3, every numpy release tried
   (2.3.5 to 2.5.3) segfaults on an in-place op on a large temporary, for example
   `c = False; c |= big_array == x`. That is what made `xarray.open_dataset` crash while

@@ -1,0 +1,11 @@
+directories:
+  download: /glade/derecho/scratch/kheyblom/data/imerg_tiny/
+  logs: ./logs
+log_file: imerg_download_early_late_daily_tiny.log
+n_processes: 2
+version: V07
+products:
+  - early/daily
+  - late/daily
+year_range: [2026, 2026]
+retries: 3
