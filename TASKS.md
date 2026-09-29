@@ -47,7 +47,7 @@ Results (2026-09-29):
 - follow-up: workers now reset their inherited signal handlers (on 3.13 the pool forks). Tested with interrupted scratch runs under SIGINT and SIGTERM.
 - smoke-test data (`data/imerg_tiny/`) deleted on request.
 
-# 6. Download V07 early and late daily products
+# 6. Download V07 early and late daily products [COMPLETED]
 Download the Early and Late daily IMERG runs into the same tree (`<download>/v_07/raw/{early,late}/daily/<year>/`). These products are still being produced, so each record grows every day. Half-hourly is not part of this task (see *Later*).
 
 CMR totals as of 2026-09-29 (sizes estimated from the first granule; later files are larger):
@@ -63,6 +63,12 @@ Config-only: the code already supports these products.
 - small test: one year into a separate scratch directory. Delete it afterwards.
 - full download (~550 GB, about 1.5 h at the rate task 5 achieved). Needs my approval.
 - done when verification reports all files present and complete.
+
+Results (2026-09-29):
+- dry run: 20,996 files, 608.42 GB. Test (2026 only, 542 files): verified. Test data deleted.
+- run: login node derecho3, 4 workers, 11:01–12:38 (~97 min, ~105 MB/s). 3 transient 502 errors, all recovered on retry.
+- verified 20,996/20,996 files (608.42 GB), `done :-)`. On disk: early and late each have 10,498 files, every year 1998–2025 complete, 2026 to 09-28 (271), no `.part` files.
+- sub-releases: V07B, then V07C from 2026-03-04 (early) and 2026-03-03 (late), with no overlap.
 
 # Later (not scheduled)
 - half-hourly products (early/late/final): about 500k files and ~3.6 TB per product. Design work is needed first (storage and purge policy, CMR search one year at a time, a smaller test than one year). To be planned together at a later date.

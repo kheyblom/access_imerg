@@ -51,13 +51,13 @@ step, so a new session can resume without re-deriving anything.
   user's request. smap got only the `only-managed` setting (it has no
   venv, and it still requires >=3.14, which has the numpy crash; flagged to the user).
   That was committed and pushed over an explicit SSH URL.
-- Task 6 (early and late **daily** only) is in progress. It uses
-  `config/config_download_early_late_daily.yaml`, with
-  `config/config_download_early_late_daily_tiny.yaml` for the 2026-only test (542/542
-  verified; test data deleted). Dry run: 20,996 files, 608.42 GB. The full run started
-  2026-09-29 11:01 on **derecho3**, pid 3928136, 4 workers. Check it with
-  `./run_download.sh --status config/config_download_early_late_daily.yaml`. When it
-  ends, confirm `verified 20996/20996` and `done :-)`, then mark task 6 complete.
+- Task 6 (early and late **daily** only) is complete (2026-09-29, 11:01–12:38 on
+  derecho3). Verified 20,996/20,996 files, 608.42 GB, under
+  `/glade/derecho/scratch/kheyblom/data/imerg/v_07/raw/{early,late}/daily/<year>/`. Each
+  product has 10,498 files, 1998-01-01 to 2026-09-28. Configs:
+  `config/config_download_early_late_daily.yaml` (a rerun tops up new days) and `_tiny`.
+- No task is scheduled next. The candidates are in TASKS.md *Later*: half-hourly (needs
+  design work with the user) and keeping the early/late records current. Ask the user.
 - Early/late sub-releases: V07B up to 2026-03-03 (early) and 2026-03-02 (late), V07C
   after that, with no overlap.
 - Half-hourly is deferred: the user will do its design work at a later date (see
