@@ -1,0 +1,14 @@
+directories:
+  download: /glade/derecho/scratch/kheyblom/data/imerg/
+  logs: ./logs
+log_file: imerg_download.log
+# few workers, to stay well inside what GES DISC tolerates
+n_processes: 4
+version: V07
+# <latency>/<frequency>: latency early, late or final; frequency half_hourly,
+# daily or monthly (monthly is final only)
+products:
+  - final/daily
+year_range: null
+# attempts per file before it is reported failed; a rerun retries it again
+retries: 3
