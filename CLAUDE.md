@@ -16,18 +16,35 @@ step, so a new session can resume without re-deriving anything.
 ## Current working state
 
 - Task 1 (this CLAUDE.md) and task 2 (git repo, `origin` connected) are done.
-- Next is task 3: plan and build the pipeline, starting with **V07 Final daily**
-  (`GPM_3IMERGDF`). Version, product (early/late/final) and time frequency must be
-  config-driven. **Present the design to the user before writing code.**
+- Task 3 is built but not yet marked complete. The approved plan is in
+  `~/.claude/plans/see-tasks-md-i-atomic-adleman.md`. These exist: `imerg_download.py`,
+  `config/config_download.yaml` (V07 final daily, full record) and
+  `config/config_download_tiny.yaml` (2025 only, into `data/imerg_tiny/`), `utils/`,
+  `run_download.sh`, `job_download.pbs` and `README.md`.
+- Verified so far: dry runs only. Full: 10,135 files, 291.45 GB. Tiny: 273 files,
+  7.92 GB. All are release V07B, with no skipped names.
+- Remaining for task 3, each needing the user's go-ahead: (1) run the tiny download with
+  `./run_download.sh config/config_download_tiny.yaml`, check verification and
+  `done :-)`, rerun to confirm all files are skipped, and test a `kill -INT` resume;
+  (2) start the full download. Then mark task 3 complete in TASKS.md.
 - Nothing has been downloaded yet.
+
+Design choices already settled with the user:
+- Transfer is our own per-file `Pool` loop (gleam pattern) over
+  `earthaccess.get_requests_https_session()`, not `earthaccess.download()`.
+- Time selection is `year_range` only.
+- Products are configured as `<latency>/<frequency>` (for example `final/daily`) and
+  mapped to short names in `SHORT_NAMES`. Local subdirectories are the year, or
+  year/month for half-hourly (`SUBDIR_FORMAT`).
+- Exact byte sizes come from CMR: `Size` is in MiB, and `round(Size * 1024**2)` equals
+  the Content-Length.
 
 ## Environment and commands
 
 - Python 3.14 environment managed by `uv`, already built in `.venv/`. Run everything as
   `uv run python <script> --config config/<file>.yaml` (or `.venv/bin/python`).
   `uv sync` rebuilds it from `uv.lock`.
-- `pyyaml` (needed by `utils/path_utils.py`) is only present transitively. Add it to
-  `pyproject.toml` explicitly when the utils are added.
+- `pyyaml` (needed by `utils/path_utils.py`) is now an explicit dependency.
 - There is no build, lint or test tooling in this repo or its siblings. Verify with a
   `--dry-run` (enumerate and size the files, download nothing) and a "tiny" config
   (for example one month into a separate scratch directory) before any full run.
