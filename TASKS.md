@@ -19,12 +19,19 @@ Initial build (done):
 - `utils/` (copied from siblings), `run_download.sh` (detached login-node run, `--status`), `job_download.pbs` (Casper fallback), `README.md`.
 - dry runs pass: full = 10,135 files / 291 GB, tiny = 273 files / 7.9 GB, all release V07B.
 
-# 4. Test the pipeline
+# 4. Test the pipeline [COMPLETED]
 Run the tiny config end-to-end before any full download (~7.9 GB, login node, no core-hours):
 - `./run_download.sh config/config_download_tiny.yaml`; check `--status`, the per-worker logs, a clean verification pass and `done :-)`.
 - rerun it and confirm every file is skipped.
 - interrupt a run with `kill -INT`, confirm `.part` files are swept, and confirm a rerun resumes and verifies.
 - fix anything found, and commit.
+
+Results (2026-09-29):
+- first run: every file got 403 `EULA Acceptance Failure`, because the GES DISC app was not approved on the Earthdata account (now approved). Fixed: a one-byte access check before any transfer, no retries on 401/403.
+- `kill -INT` was ignored (a background job from a non-interactive shell inherits SIGINT as ignored). Fixed: SIGINT/SIGTERM handlers. The retest was clean: the partial was swept, the pid file removed, and no processes were left.
+- resume: 26 skipped, 247 downloaded, verified 273/273 (7.92 GB), `done :-)`. About 58 MB/s with 2 workers.
+- rerun: all 273 skipped, verified.
+- files are valid (read with h5py and netCDF4). Found an environment problem: `xarray.open_dataset` segfaults in this venv (h5py and netCDF4 HDF5 conflict). Not a download issue; needs fixing before any processing work.
 
 # 5. Full download of V07 final daily
 Download the full V07 final daily record (10,135 files, ~291 GB) into `/glade/derecho/scratch/kheyblom/data/imerg/`.

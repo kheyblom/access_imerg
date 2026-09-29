@@ -21,23 +21,24 @@ step, so a new session can resume without re-deriving anything.
   `config/config_download.yaml` (V07 final daily, full record) and
   `config/config_download_tiny.yaml` (2025 only, into `data/imerg_tiny/`), `utils/`,
   `run_download.sh`, `job_download.pbs` and `README.md`.
-- Verified so far: dry runs only. Full: 10,135 files, 291.45 GB. Tiny: 273 files,
-  7.92 GB. All are release V07B, with no skipped names.
-- Task 4 is in progress. The first tiny run (2026-09-29) got 403 `EULA Acceptance Failure`
-  on every GET, because the GES DISC application is not approved on the Earthdata
-  account. HEAD requests succeed via CloudFront, so a HEAD check does not detect this.
-  The user must approve it at
-  https://urs.earthdata.nasa.gov/approve_app?client_id=e2WVk8Pw6weeLUKZYOxvTQ. Nothing was
-  written to disk. Fixes made: a one-byte `check_access` before the pool (it also runs on
-  dry runs), no retries on 401/403, and SIGINT/SIGTERM handlers (`kill -INT` was ignored,
-  because background jobs from a non-interactive shell inherit SIGINT as ignored). The
-  handlers were tested detached. Once access is approved, rerun the tiny test.
-- Task 4 checklist: the tiny download with
-  `./run_download.sh config/config_download_tiny.yaml`, checking verification and
-  `done :-)`, a rerun to confirm all files are skipped, and a `kill -INT` resume test.
-  After that comes task 5 (the full V07 final daily download). Each needs the user's
-  go-ahead.
-- Nothing has been downloaded yet.
+- Dry runs: full = 10,135 files, 291.45 GB; tiny = 273 files, 7.92 GB. All are release
+  V07B.
+- Task 4 (tests) is complete (2026-09-29); the details are in TASKS.md. The GES DISC EULA
+  is now approved on the account. Fixes from testing: a one-byte `check_access` before
+  the pool (it also runs on dry runs, because HEAD requests pass without the EULA), no
+  retries on 401/403, and SIGINT/SIGTERM handlers (background jobs from a
+  non-interactive shell inherit SIGINT as ignored). The interrupt, resume and all-skip
+  rerun were all verified.
+- The tiny download is on disk: `/glade/derecho/scratch/kheyblom/data/imerg_tiny/`
+  (273 files, 8 GB), verified. It can be deleted, but only with the user's okay.
+- Rate: about 58 MB/s with 2 workers. The full record at 4 workers should take roughly
+  1–1.5 h.
+- Next is task 5: the full V07 final daily download with `./run_download.sh`. It needs
+  the user's go-ahead.
+- Known environment problem: in `.venv`, `xarray.open_dataset` segfaults whichever
+  engine is used, because xarray loads the h5py-based backend and the h5py and netCDF4
+  wheels bring conflicting HDF5 builds. `h5py` or `netCDF4` alone read the files fine.
+  It does not affect downloading. Fix it before any processing work.
 
 Design choices already settled with the user:
 - Transfer is our own per-file `Pool` loop (gleam pattern) over
