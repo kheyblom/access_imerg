@@ -39,16 +39,15 @@ step, so a new session can resume without re-deriving anything.
   pool forks and workers would otherwise inherit the main process's handlers. This was
   tested with interrupted scratch runs. Worker logs are `<stem>_forkpoolworker-N.log`.
 - The smoke-test data (`data/imerg_tiny/`) was deleted on 2026-09-29, at the user's request.
-- Open question for the user: the venv's base interpreter is `~/miniconda3/bin/python3`
-  (`.venv/bin/python` is a symlink to it, and `sys.base_prefix` is miniconda). uv manages
-  the packages, but when `uv sync --python 3.13` ran, no uv-managed 3.13 was installed and
-  uv's default `python-preference = managed` falls back to interpreters on PATH, where
-  miniconda comes first. The siblings are the same. The proposed fix, once the user
-  approves: `uv python install 3.13`, pin with `.python-version` and
-  `[tool.uv] python-preference = "only-managed"`, then rebuild `.venv`.
-- Task 6 (early and late products) is written in TASKS.md: 6a is daily (config only),
-  6b is half-hourly (about 1M files and 7+ TB, which needs design work and approval).
-  Nothing for it has started.
+- The venv interpreter is uv-managed (fixed 2026-09-29, at the user's request: no
+  miniconda dependency). The base is `~/.local/share/uv/python/cpython-3.13.12`. It is
+  pinned with `.python-version` (`3.13`) and `[tool.uv] python-preference =
+  "only-managed"` in `pyproject.toml`. Before that, uv had fallen back to miniconda's 3.13
+  on PATH, because no managed 3.13 was installed. The sibling repos' venvs still use
+  miniconda; that is not fixed, since the user did not ask for it.
+- Task 6 (early and late **daily** only) is written in TASKS.md; it is config-only and
+  has not started. Half-hourly is deferred: the user will do its design work at a later
+  date (see *Later* in TASKS.md).
 - The environment was fixed on 2026-09-29. On Python 3.14.3, every numpy release tried
   (2.3.5 to 2.5.3) segfaults on an in-place op on a large temporary, for example
   `c = False; c |= big_array == x`. That is what made `xarray.open_dataset` crash while
@@ -68,7 +67,8 @@ Design choices already settled with the user:
 
 ## Environment and commands
 
-- Python 3.13 environment managed by `uv` (3.14 crashes numpy, see above), already built in `.venv/`. Run everything as
+- Python 3.13 environment managed by `uv`, on a uv-managed interpreter only (3.14 crashes
+  numpy, see above), already built in `.venv/`. Run everything as
   `uv run python <script> --config config/<file>.yaml` (or `.venv/bin/python`).
   `uv sync` rebuilds it from `uv.lock`.
 - `pyyaml` (needed by `utils/path_utils.py`) is now an explicit dependency.
